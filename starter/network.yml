@@ -1,0 +1,96 @@
+Description: CD12352 - Infrastructure as Code Project - Network
+
+Parameters:
+  # Add your parameters here
+  VpcCIDR:
+    Type: String
+    Default: !Ref VpcCIDR
+  PublicSubnet1CIDR:
+    Type: String
+    Default: !Ref PublicSubnet1CIDR
+  PublicSubnet2CIDR:
+    Type: String
+    Default: !Ref PublicSubnet2CIDR
+  PrivateSubnet1CIDR:
+    Type: String
+    Default: !Ref PrivateSubnet1CIDR
+  PrivateSubnet2CIDR:
+    Type: String
+    Default: !Ref PrivateSubnet2CIDR
+
+Resources:
+  # Add your resources here
+    VPC:
+      Type: "AWS::EC2::VPC"
+      Properties:
+        CidrBlock: !Ref VpcCIDR
+        EnableDnsSupport: "true"
+        EnableDnsHostnames: "true"
+    PublicSubnet1:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: !Ref PublicSubnet1CIDR
+        AvailabilityZone: "us-east-1a"
+        MapPublicIpOnLaunch: "true"
+    PublicSubnet2:
+      Type: "AWS:EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: !Ref PublicSubnet2CIDR
+        AvailabilityZone: "us-east-1b"
+        MapPublicIpOnLaunch: "true"
+    PrivateSubnet1:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: !Ref PrivateSubnet1CIDR
+        AvailabilityZone: "us-east-1a"
+        MapPublicIpOnLaunch: "true"
+    PrivateSubnet2:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: !Ref PrivateSubnet2CIDR
+        AvailabilityZone: "us-east-1b"
+        MapPublicIpOnLaunch: "true"
+    NATGateway1:
+      Type: "AWS:EC2:NatGateway"
+      Properties:
+        AllocationId: !GetAtt EIP1.AllocationId
+        SubnetId: !Ref PublicSubnet1
+    NATGateway2:
+      Type: "AWS:EC2:NatGateway"
+      Properties:
+        AllocationId: !GetAtt EIP2.AllocationId
+        SubnetId: !Ref PublicSubnet2
+    EIP1:
+      Type: "AWS:EC2:EIP"
+      Properties:
+        Domain: "vpc"
+    EIP2:
+      Type: "AWS:EC2:EIP"
+      Properties:
+        Domain: "vpc"
+    StaticContentS3Bucket:
+      Type: "AWS:S3:Bucket"
+      Properties:
+        BucketName: "my-static-content-bucket"
+        AccessControl: "PublicRead"
+        WebsiteConfiguration:
+          IndexDocument: "index.html"
+    EC2InstanceS3BucketPolicy:
+      Type: "AWS:IAM:Policy"
+      Properties:
+        PolicyName: "EC2InstancesS3BucketPolicy"
+        Roles:
+          - Ref: "EC2instaaceRole"
+        PolictyDocument:
+          Version: "2024-11-20"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "s3:GetObject"
+                - "s3:PutObject"
+              Resource:
+                - !Sub "arn:aws:s3:::my-static-content-bucket/*"
